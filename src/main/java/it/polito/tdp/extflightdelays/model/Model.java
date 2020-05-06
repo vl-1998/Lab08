@@ -27,10 +27,10 @@ public class Model {
 		Graphs.addAllVertices(this.grafo, idMap.values());
 		
 		//Aggiungo gli archi
-			for (Adiacenza a : dao.getAdiacenza(idMap, X)) {
-			
-				Graphs.addEdge(this.grafo, a.getPartenza(),  a.getArrivo(), a.getPeso());
-			
+			for (Adiacenza a : dao.getAdiacenza(idMap)) {
+				if (a.getPeso()>=X) {
+					Graphs.addEdge(this.grafo, a.getPartenza(),  a.getArrivo(), a.getPeso());
+				}	
 			}
 		}
 		

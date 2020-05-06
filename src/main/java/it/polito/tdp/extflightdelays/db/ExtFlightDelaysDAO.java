@@ -173,8 +173,9 @@ public class ExtFlightDelaysDAO {
 		}
 	}*/
 	
-	public List<Adiacenza> getAdiacenza (Map <Integer, Airport> idMap, double x){
-		String sql = "select distinct ORIGIN_AIRPORT_ID, DESTINATION_AIRPORT_ID, avg(distance) as media " + 
+	public List<Adiacenza> getAdiacenza (Map <Integer, Airport> idMap){
+		String sql = "select distinct ORIGIN_AIRPORT_ID, DESTINATION_AIRPORT_ID, "+ 
+				"SUM(distance) as somma, count(*) as viaggi " + 
 				"	from flights as f " +  
 				"	group by ORIGIN_AIRPORT_ID, DESTINATION_AIRPORT_ID";
 		List <Adiacenza> result = new ArrayList <>();
@@ -187,26 +188,27 @@ public class ExtFlightDelaysDAO {
 			ResultSet res = st.executeQuery();
 			
 			while (res.next()) {
-				if (res.getDouble("media") >=x ) {
-					Adiacenza a = new Adiacenza (idMap.get(res.getInt("ORIGIN_AIRPORT_ID")),
-							idMap.get(res.getInt("DESTINATION_AIRPORT_ID")), res.getDouble("media") );
+				Adiacenza a = new Adiacenza (idMap.get(res.getInt("ORIGIN_AIRPORT_ID")),
+						idMap.get(res.getInt("DESTINATION_AIRPORT_ID")), res.getDouble("somma"), res.getInt("viaggi") );
 				
 					if (result.isEmpty()) {
+						a.setPeso(res.getDouble("somma")/res.getInt("viaggi"));
 						result.add(a);
 					} else {
 						for (Adiacenza ad : result) {
-							if ((ad.getPartenza().getId()!=a.getPartenza().getId()) && (ad.getPartenza().getId()!=a.getArrivo().getId())) {
+							if ((ad.getPartenza().getId()!=a.getArrivo().getId()) && (ad.getArrivo().getId()!=a.getPartenza().getId())) {
 								flag=true;
 						}
 					}
 					if (flag==true) {
+						a.setPeso(res.getDouble("somma")/res.getInt("viaggi"));
 						result.add(a);
 					} else {
-						int vecchiaMedia =result.indexOf(a);
-						result.get(vecchiaMedia).setPeso((vecchiaMedia+a.getPeso())/2);
+						result.get(result.indexOf(a)).setPeso((result.get(result.indexOf(a)).getSomma()+a.getSomma())/(result.get(result.indexOf(a)).getCount()+a.getCount()));
+						
 					}
 					}
-				}
+				
 			}
 			st.close();
 			conn.close();
